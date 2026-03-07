@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CookCam — Your AI cooking coach that sees your kitchen and guides you in real-time through voice">
+    <meta name="theme-color" content="#FF6B35">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>CookCam — Live AI Cooking Coach</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">
+</head>
+<body>
+    <div class="app">
+        <!-- ═══ Skip Link (a11y) ═══ -->
+        <a href="#mainContent" class="sr-only focus-visible-only">Skip to main content</a>
+
+        <!-- ═══ Top Bar ═══ -->
+        <header class="top-bar" role="banner">
+            <div class="logo">
+                <span class="logo-icon" aria-hidden="true">🍳</span>
+                <span class="logo-text">CookCam</span>
+                <span class="logo-badge">Live AI</span>
+            </div>
+            <div class="top-bar-actions">
+                <button class="theme-toggle" id="btnTheme" aria-label="Toggle light/dark theme" title="Toggle theme">🌙</button>
+                <div class="connection-status" role="status" aria-live="polite">
+                    <span class="status-dot" id="statusDot" aria-hidden="true"></span>
+                    <span class="status-text" id="statusText">Disconnected</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══ Mobile Tabs ═══ -->
+        <nav class="mobile-tabs" role="tablist" aria-label="Main navigation">
+            <button class="tab-btn active" data-tab="video" role="tab" aria-selected="true">🎥 <span>Live</span></button>
+            <button class="tab-btn" data-tab="chat" role="tab" aria-selected="false">🗨️ <span>Activity</span></button>
+            <button class="tab-btn" data-tab="recipes" role="tab" aria-selected="false">📖 <span>Recipes</span></button>
+            <button class="tab-btn" data-tab="settings" role="tab" aria-selected="false">⚙️ <span>Settings</span></button>
+        </nav>
+
+        <!-- ═══ Loading Overlay ═══ -->
+        <div class="loading-overlay" id="loadingOverlay" style="display:none" role="alert" aria-live="assertive">
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <div class="loading-text">Reconnecting to CookCam AI...</div>
+        </div>
+
+        <!-- ═══ Main Content ═══ -->
+        <main class="main-content" id="mainContent">
+            <!-- Video Feed -->
+            <section class="video-section" aria-label="Camera feed">
+                <!-- Timers (floating above video) -->
+                <div class="timers-container" id="timersContainer" style="display:none" role="timer" aria-label="Cooking timers"></div>
+
+                <div class="video-container" id="videoContainer">
+                    <video id="webcam" autoplay playsinline muted aria-label="Webcam feed"></video>
+                    <canvas id="captureCanvas" hidden></canvas>
+
+                    <!-- Placeholder before camera starts -->
+                    <div class="video-placeholder" id="videoPlaceholder">
+                        <div class="video-placeholder-icon" aria-hidden="true">🎥</div>
+                        <div class="video-placeholder-text">
+                            Click <strong>Start Session</strong> to activate your camera and connect to your AI cooking coach
+                        </div>
+                    </div>
+
+                    <!-- Skeleton loading state -->
+                    <div class="video-skeleton" id="videoSkeleton" style="display:none" aria-hidden="true">
+                        <div class="skeleton-pulse"></div>
+                        <div class="skeleton-text">Initializing camera...</div>
+                    </div>
+
+                    <!-- Overlay on video -->
+                    <div class="video-overlay">
+                        <div class="video-overlay-top">
+                            <div class="ai-status" id="aiStatus" aria-live="polite">
+                                <div class="ai-status-dot" aria-hidden="true"></div>
+                                <span id="aiStatusText">Connecting...</span>
+                            </div>
+                            <div class="camera-badge" id="cameraBadge" style="display:none" aria-label="Camera is live">
+                                <div class="camera-badge-dot" aria-hidden="true"></div>
+                                <span>LIVE</span>
+                            </div>
+                        </div>
+
+                        <!-- Step Tracker (bottom of video overlay) -->
+                        <div class="step-tracker" id="stepTracker" style="display:none" role="navigation" aria-label="Recipe step tracker">
+                            <div class="step-tracker-header">
+                                <span class="step-tracker-title" id="stepTrackerTitle"></span>
+                                <span class="step-tracker-progress" id="stepTrackerProgress"></span>
+                            </div>
+                            <div class="step-tracker-content" id="stepTrackerContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Side Panel -->
+            <aside class="side-panel" aria-label="Side panel">
+                <!-- Sub-navigation tabs -->
+                <div class="panel-tabs" role="tablist" aria-label="Panel navigation">
+                    <button class="panel-tab active" data-panel="chat" role="tab" aria-selected="true">💬 Chat</button>
+                    <button class="panel-tab" data-panel="checklist" role="tab" aria-selected="false">✅ List</button>
+                    <button class="panel-tab" data-panel="recipes" role="tab" aria-selected="false">📖 Recipes</button>
+                    <button class="panel-tab" data-panel="settings" role="tab" aria-selected="false">⚙️ Settings</button>
+                </div>
+
+                <!-- ── Chat Panel ── -->
+                <div class="panel-content active" data-panel="chat" role="tabpanel">
+                    <div class="chat-header">
+                        <h2>🗨️ Activity</h2>
+                        <div class="sound-wave" id="soundWave" aria-hidden="true">
+                            <div class="sound-wave-bar"></div>
+                            <div class="sound-wave-bar"></div>
+                            <div class="sound-wave-bar"></div>
+                            <div class="sound-wave-bar"></div>
+                            <div class="sound-wave-bar"></div>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Chat messages">
+                        <!-- Messages populated by JS -->
+                    </div>
+                    <!-- Text Chat Input -->
+                    <div class="chat-input-container">
+                        <input type="text" id="chatInput" class="chat-input" placeholder="Type a message..." disabled
+                               aria-label="Type a message to CookCam" autocomplete="off">
+                        <button id="chatSendBtn" class="chat-send-btn" disabled aria-label="Send message">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── Checklist Panel ── -->
+                <div class="panel-content" data-panel="checklist" role="tabpanel">
+                    <div class="panel-header">
+                        <h2>✅ Ingredients</h2>
+                    </div>
+                    <div class="panel-body" id="checklistContent">
+                        <div class="empty-state">No ingredient list yet. Ask CookCam to suggest a recipe!</div>
+                    </div>
+                </div>
+
+                <!-- ── Recipes Panel ── -->
+                <div class="panel-content" data-panel="recipes" role="tabpanel">
+                    <div class="panel-header">
+                        <h2>📖 Saved Recipes</h2>
+                    </div>
+                    <div class="panel-body" id="recipeHistoryList">
+                        <div class="empty-state">No saved recipes yet. Ask CookCam to save a recipe!</div>
+                    </div>
+                </div>
+
+                <!-- ── Settings Panel ── -->
+                <div class="panel-content" data-panel="settings" role="tabpanel">
+                    <div class="panel-header">
+                        <h2>⚙️ Preferences</h2>
+                    </div>
+                    <div class="panel-body" id="preferencesPanel"></div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- ═══ Control Bar ═══ -->
+        <footer class="control-bar" role="toolbar" aria-label="Session controls">
+            <div class="control-bar-inner">
+                <!-- Start Session -->
+                <button class="control-btn primary" id="btnStart" aria-label="Start cooking session">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <span class="btn-label">Start Session</span>
+                </button>
+
+                <div class="control-divider" id="divider1" style="display:none" aria-hidden="true"></div>
+
+                <!-- Toggle Mic -->
+                <button class="control-btn icon-only active" id="btnMic" disabled title="Toggle Microphone" aria-label="Toggle microphone">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                        <line x1="12" y1="19" x2="12" y2="23"></line>
+                        <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                </button>
+
+                <!-- Toggle Camera -->
+                <button class="control-btn icon-only active" id="btnCamera" disabled title="Toggle Camera" aria-label="Toggle camera">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M23 7l-7 5 7 5V7z"></path>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                </button>
+
+                <div class="control-divider" id="divider2" style="display:none" aria-hidden="true"></div>
+
+                <!-- End Session -->
+                <button class="control-btn danger" id="btnStop" disabled aria-label="End cooking session">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="2"></line>
+                    </svg>
+                    <span class="btn-label">End</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

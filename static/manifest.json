@@ -1,0 +1,19 @@
+{
+    "name": "CookCam — Live AI Cooking Coach",
+    "short_name": "CookCam",
+    "description": "Real-time AI cooking assistant that sees your kitchen through your webcam and guides you step-by-step through natural voice conversation.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#030303",
+    "theme_color": "#FF6B35",
+    "orientation": "any",
+    "categories": ["food", "lifestyle"],
+    "icons": [
+        {
+            "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🍳%3C/text%3E%3C/svg%3E",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ]
+}
