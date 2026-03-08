@@ -10,7 +10,7 @@ from api.firestore_client import (
     get_session,
     delete_session,
     count_active_sessions,
-    is_firestore_connected,
+    # is_firestore_connected, (Used in testing and server health check)
 )
 from utils.logger import logger
 
