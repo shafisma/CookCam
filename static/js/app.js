@@ -39,6 +39,8 @@ function connectWebSocket() {
                         STATE.isConnected = true;
                         updateUI();
                         addMessage('system', '🔗 Connected to CookCam AI — say hello!');
+                    } else if (data.status === 'reconnecting') {
+                        addMessage('system', '🔄 Gemini session dropped — reconnecting...');
                     }
                     break;
                 case 'audio':
