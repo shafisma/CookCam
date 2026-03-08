@@ -1,0 +1,73 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CookCam — Cloud Build CI/CD Pipeline
+# Automatically builds, pushes, and deploys to Cloud Run on every push.
+#
+# Trigger setup (one-time):
+#   gcloud builds triggers create github \
+#     --repo-name=ntt --repo-owner=YOUR_GITHUB_USER \
+#     --branch-pattern="^main$" \
+#     --build-config=cloudbuild.yaml \
+#     --substitutions=_GEMINI_API_KEY=$(gcloud secrets versions access latest --secret=gemini-api-key)
+#
+# Or run manually:
+#   gcloud builds submit --config=cloudbuild.yaml \
+#     --substitutions=_SERVICE_NAME=cookcam,_REGION=us-central1,_GEMINI_API_KEY=your-key
+# ═══════════════════════════════════════════════════════════════════════════
+
+substitutions:
+  _SERVICE_NAME: cookcam
+  _REGION: us-central1
+  _MEMORY: 512Mi
+  _TIMEOUT: "3600"
+  _MAX_INSTANCES: "10"
+  _CONCURRENCY: "80"
+
+steps:
+  # ── Step 1: Build the Docker image ─────────────────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE_NAME}:${SHORT_SHA}"
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE_NAME}:latest"
+      - "."
+
+  # ── Step 2: Push the image to Artifact Registry ────────────────────────
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "push"
+      - "--all-tags"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE_NAME}"
+
+  # ── Step 3: Deploy to Cloud Run ────────────────────────────────────────
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      - "run"
+      - "deploy"
+      - "${_SERVICE_NAME}"
+      - "--image"
+      - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE_NAME}:${SHORT_SHA}"
+      - "--region"
+      - "${_REGION}"
+      - "--port"
+      - "8080"
+      - "--memory"
+      - "${_MEMORY}"
+      - "--timeout"
+      - "${_TIMEOUT}"
+      - "--concurrency"
+      - "${_CONCURRENCY}"
+      - "--max-instances"
+      - "${_MAX_INSTANCES}"
+      - "--allow-unauthenticated"
+      - "--set-env-vars"
+      - "GEMINI_API_KEY=${_GEMINI_API_KEY}"
+
+images:
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE_NAME}:${SHORT_SHA}"
+  - "${_REGION}-docker.pkg.dev/${PROJECT_ID}/cloud-run-source-deploy/${_SERVICE_NAME}:latest"
+
+options:
+  logging: CLOUD_LOGGING_ONLY

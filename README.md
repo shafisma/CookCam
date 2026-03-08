@@ -73,19 +73,54 @@ Gemini 2.5 Flash Native Audio
 
 ### Google Cloud Run Deployment
 
-1. **Build and deploy:**
-   ```bash
-   # Set your project
-   gcloud config set project YOUR_PROJECT_ID
+#### Option A: One-command deploy script ([`deploy.sh`](deploy.sh))
+```bash
+# Make executable (first time only)
+chmod +x deploy.sh
 
-   # Deploy to Cloud Run
-   gcloud run deploy cookcam \
-     --source . \
-     --port 8080 \
-     --allow-unauthenticated \
-     --set-env-vars GEMINI_API_KEY=your-key \
-     --region us-central1
-   ```
+# Deploy with defaults
+./deploy.sh
+
+# Or override project/region
+./deploy.sh --project YOUR_PROJECT_ID --region us-central1
+```
+
+The script automatically:
+- Loads `GEMINI_API_KEY` from `.env`
+- Enables required GCP APIs (Cloud Run, Cloud Build, Artifact Registry)
+- Builds the Docker image from source
+- Deploys to Cloud Run with optimized settings (3600s timeout for WebSockets, 512Mi memory)
+- Prints the live HTTPS URL
+
+#### Option B: CI/CD with Cloud Build ([`cloudbuild.yaml`](cloudbuild.yaml))
+
+Automated pipeline that runs on every push to `main`:
+
+```bash
+# One-time: create the trigger
+gcloud builds triggers create github \
+  --repo-name=ntt --repo-owner=YOUR_GITHUB_USER \
+  --branch-pattern="^main$" \
+  --build-config=cloudbuild.yaml
+```
+
+The pipeline (defined in [`cloudbuild.yaml`](cloudbuild.yaml)):
+1. **Builds** the Docker image and tags it with the commit SHA
+2. **Pushes** to Artifact Registry
+3. **Deploys** to Cloud Run with all production settings
+
+#### Option C: Manual deploy
+```bash
+gcloud config set project YOUR_PROJECT_ID
+
+gcloud run deploy cookcam \
+  --source . \
+  --port 8080 \
+  --allow-unauthenticated \
+  --set-env-vars GEMINI_API_KEY=your-key \
+  --region us-central1 \
+  --timeout 3600
+```
 
 ### Firestore Setup (Optional)
 
@@ -122,6 +157,8 @@ ntt/
 ├── server.py                 # FastAPI backend + Gemini Live API proxy
 ├── requirements.txt          # Python dependencies
 ├── Dockerfile                # Cloud Run container
+├── cloudbuild.yaml           # CI/CD pipeline — automated build & deploy
+├── deploy.sh                 # One-command deploy script
 ├── .env.example              # Environment template
 ├── README.md
 ├── api/
