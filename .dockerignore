@@ -1,0 +1,29 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.venv
+venv
+env
+
+# IDE / Editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment (secrets — do NOT bake into the image)
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+README.md
+*.md
