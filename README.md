@@ -22,14 +22,24 @@ Built with **Gemini Live API** for multimodal real-time interaction (vision + au
 
 ## 🏗️ Architecture
 
+![CookCam Architecture Diagram](static/architecture.png)
+
 ```
 Browser (Webcam + Mic)
-    ↕ WebSocket (audio + video frames)
+    ↕ WebSocket (binary PCM audio + base64 JPEG video frames)
 FastAPI Backend (server.py)
-    ↕ Gemini Live API (send_realtime_input)
+    ↕ Gemini Live API (send_realtime_input / receive)
 Gemini 2.5 Flash Native Audio
-    → Audio + Text responses
+    → Audio responses + Text + Function Calls (tool use)
+        ↕
+Cloud Firestore (recipes + sessions persistence)
 ```
+
+**Key data flows:**
+- **Browser → Backend → Gemini**: Webcam frames (768×768 JPEG, 1 FPS) + microphone audio (16kHz PCM) streamed over WebSocket
+- **Gemini → Backend → Browser**: Voice responses (24kHz PCM) + text + function calls (timers, recipes, checklists) routed back in real time
+- **Backend ↔ Firestore**: Saved recipes and session tokens persisted (with automatic in-memory fallback)
+- **Function Calling**: Gemini proactively invokes 6 tools → backend executes them → UI updates sent to browser → results returned to Gemini
 
 ## 🚀 Quick Start
 
@@ -230,6 +240,8 @@ ntt/
 - [ ] **CI/CD Pipeline** — GitHub Actions workflow for linting, testing, and auto-deploying to Cloud Run
 - [ ] **Load Testing** — Verify concurrent WebSocket session limits and Gemini API quota handling
 
-## �📜 License
+## 📜 License
 
-Built for the NTT Buildathon 2026.
+Built for the Gemini Live Hackathon 2026 🏆
+
+🔗 **GitHub:** [github.com/shafisma/cookcam](https://github.com/shafisma/cookcam)
